@@ -1,0 +1,2406 @@
+<!DOCTYPE html>
+<html lang="az" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartHealth | Qan Analizi və Tövsiyələr</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Noto+Sans:wght@400;500;600;700;800&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+    
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Noto Sans', 'Manrope', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#3780f6',
+                        health: '#10b981',
+                        warning: '#f59e0b',
+                        danger: '#ef4444',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .gauge-circle {
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        .progress-bar {
+            transition: width 0.5s ease-out;
+        }
+        .section {
+            display: none;
+        }
+        .section.active {
+            display: block;
+        }
+        .step {
+            display: none;
+        }
+        .step.active {
+            display: block;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .nav-link.active {
+            background: rgba(55, 128, 246, 0.1);
+            color: #3780f6;
+            border-left: 3px solid #3780f6;
+        }
+        .checkbox-checked {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+        .dragover {
+            background: rgba(55, 128, 246, 0.1);
+            border-color: #3780f6 !important;
+        }
+        input.border-red-500:focus {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+        }
+        input.border-green-500:focus {
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+        input.border-amber-500:focus {
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+        }
+        .pulsing-dot {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .meal-card:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans min-h-screen">
+
+    <!-- SECTION 1: WELCOME/HERO (Initially Visible) -->
+    <section id="welcome" class="section active min-h-screen">
+        <div class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-900 flex flex-col relative overflow-hidden">
+            <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_20%_20%,#3780f6,transparent_30%),radial-gradient(circle_at_80%_0%,#10b981,transparent_25%),radial-gradient(circle_at_50%_80%,#0ea5e9,transparent_35%)]"></div>
+            <!-- Header -->
+            <header class="flex justify-between items-center p-6 relative z-10">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary to-cyan-400 flex items-center justify-center shadow-lg shadow-primary/40 text-white">
+                        <span class="material-symbols-outlined text-2xl">monitor_heart</span>
+                    </div>
+                    <div class="text-left">
+                        <p class="text-xs uppercase tracking-[0.25em] text-slate-200">SmartHealth</p>
+                        <p class="font-bold text-xl text-white">Qan Analizi Hub</p>
+                    </div>
+                </div>
+                <button onclick="toggleDarkMode()" class="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
+                    <span class="material-symbols-outlined text-white" id="themeIcon">light_mode</span>
+                </button>
+            </header>
+            
+            <!-- Hero Content -->
+            <div class="flex-1 flex items-center justify-center px-4 py-12 relative z-10">
+                <div class="max-w-4xl w-full text-center">
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary mb-6">
+                        <span class="material-symbols-outlined text-sm">health_and_safety</span>
+                        <span class="text-sm font-medium">AI Dəstəkli Sağlamlıq Platforması</span>
+                    </div>
+                    
+                    <h1 class="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+                        SmartHealth Qan Analizi<br/>və Sağlamlıq Mərkəzi
+                    </h1>
+                    
+                    <p class="text-lg md:text-xl text-slate-300 mb-10 max-w-2xl mx-auto">
+                        Laboratoriya nəticələrinizi yükləyin, SmartHealth alqoritmi ilə şəxsi qidalanma planı və peşəkar sağlamlıq tövsiyələri əldə edin
+                    </p>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+                        <button onclick="showSection('questionnaire')" class="px-8 py-4 bg-primary hover:bg-blue-600 text-white rounded-xl font-semibold transition-all shadow-lg shadow-primary/30 flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined">rocket_launch</span>
+                            Başla
+                        </button>
+                        <button onclick="fillDemoData()" class="px-8 py-4 bg-white/10 hover:bg-white/20 text-white rounded-xl font-semibold transition-all border border-white/20 flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined">play_circle</span>
+                            Demo göstər
+                        </button>
+                    </div>
+                    
+                    <!-- Feature Cards -->
+                    <div class="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                        <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:bg-white/10 transition-all">
+                            <div class="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center mb-4">
+                                <span class="material-symbols-outlined text-primary text-2xl">speed</span>
+                            </div>
+                            <h3 class="font-semibold text-white mb-2">Sürətli Təhlil</h3>
+                            <p class="text-slate-400 text-sm">2 dəqiqədə qan analizi nəticələrinin təhlili</p>
+                        </div>
+                        <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:bg-white/10 transition-all">
+                            <div class="w-12 h-12 rounded-xl bg-health/20 flex items-center justify-center mb-4">
+                                <span class="material-symbols-outlined text-health text-2xl">restaurant</span>
+                            </div>
+                            <h3 class="font-semibold text-white mb-2">Şəxsi Plan</h3>
+                            <p class="text-slate-400 text-sm">Analizlərinizə əsasən hazırlanan qidalanma planı</p>
+                        </div>
+                        <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:bg-white/10 transition-all">
+                            <div class="w-12 h-12 rounded-xl bg-warning/20 flex items-center justify-center mb-4">
+                                <span class="material-symbols-outlined text-warning text-2xl">stethoscope</span>
+                            </div>
+                            <h3 class="font-semibold text-white mb-2">Dr. Tövsiyələri</h3>
+                            <p class="text-slate-400 text-sm">Həkim tövsiyələrinə əsaslanan sağlamlıq yolu</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 2: ONBOARDING QUESTIONNAIRE -->
+    <section id="questionnaire" class="section min-h-screen bg-slate-50 dark:bg-slate-900">
+        <div class="min-h-screen flex flex-col">
+            <!-- Progress Bar -->
+            <div class="bg-white dark:bg-slate-800 shadow-sm p-4">
+                <div class="max-w-3xl mx-auto">
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="font-medium text-slate-600 dark:text-slate-300">Qeydiyyat</span>
+                        <span class="font-medium text-primary" id="stepIndicator">Addım 1/4</span>
+                    </div>
+                    <div class="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                        <div id="progressBar" class="h-full bg-primary transition-all duration-300" style="width: 25%"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Content -->
+            <div class="flex-1 p-4 py-8">
+                <div class="max-w-3xl mx-auto">
+                    
+                    <!-- Step 1: Personal Info -->
+                    <div id="step1" class="step active">
+                        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 md:p-8">
+                            <div class="flex items-center gap-3 mb-6">
+                                <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-primary">person</span>
+                                </div>
+                                <div>
+                                    <h2 class="text-xl font-bold">Şəxsi Məlumatlar</h2>
+                                    <p class="text-slate-500 dark:text-slate-400 text-sm">Əsas məlumatlarınızı daxil edin</p>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Ad və Soyad</label>
+                                    <input type="text" id="userName" placeholder="Adınızı daxil edin" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-colors">
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Yaş</label>
+                                        <input type="number" id="userAge" placeholder="35" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-colors">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Cinsiyyət</label>
+                                        <div class="flex gap-4">
+                                            <label class="flex items-center gap-2 cursor-pointer">
+                                                <input type="radio" name="gender" value="Kişi" class="w-4 h-4 text-primary">
+                                                <span>Kişi</span>
+                                            </label>
+                                            <label class="flex items-center gap-2 cursor-pointer">
+                                                <input type="radio" name="gender" value="Qadın" class="w-4 h-4 text-primary">
+                                                <span>Qadın</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Çəki (kq)</label>
+                                        <input type="number" id="userWeight" placeholder="75" step="0.1" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-colors">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Boy (sm)</label>
+                                        <input type="number" id="userHeight" placeholder="175" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-colors">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-end mt-8">
+                                <button onclick="nextStep(1)" class="px-6 py-3 bg-primary hover:bg-blue-600 text-white rounded-xl font-semibold transition-colors flex items-center gap-2">
+                                    Növbəti
+                                    <span class="material-symbols-outlined">arrow_forward</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 2: Health Conditions -->
+                    <div id="step2" class="step">
+                        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 md:p-8">
+                            <div class="flex items-center gap-3 mb-6">
+                                <div class="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-warning">health_and_safety</span>
+                                </div>
+                                <div>
+                                    <h2 class="text-xl font-bold">Sağlamlıq Problemləri</h2>
+                                    <p class="text-slate-500 dark:text-slate-400 text-sm">Var olan sağlamlıq problemlərinizi seçin</p>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                <label class="flex items-center gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                                    <input type="checkbox" name="conditions" value="Şəkər xəstəliyi" class="w-5 h-5 text-primary rounded">
+                                    <span class="flex-1">Şəkər xəstəliyi</span>
+                                    <span class="material-symbols-outlined text-slate-400">bloodtype</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                                    <input type="checkbox" name="conditions" value="Ürək problemləri" class="w-5 h-5 text-primary rounded">
+                                    <span class="flex-1">Ürək problemləri</span>
+                                    <span class="material-symbols-outlined text-slate-400">favorite</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                                    <input type="checkbox" name="conditions" value="Yüksək qan təzyiqi" class="w-5 h-5 text-primary rounded">
+                                    <span class="flex-1">Yüksək qan təzyiqi</span>
+                                    <span class="material-symbols-outlined text-slate-400">monitor_heart</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                                    <input type="checkbox" name="conditions" value="Tiroid problemi" class="w-5 h-5 text-primary rounded">
+                                    <span class="flex-1">Tiroid problemi</span>
+                                    <span class="material-symbols-outlined text-slate-400">person_alert</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                                    <input type="checkbox" name="conditions" value="Yüksək xolesterol" class="w-5 h-5 text-primary rounded">
+                                    <span class="flex-1">Yüksək xolesterol</span>
+                                    <span class="material-symbols-outlined text-slate-400">science</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                                    <input type="checkbox" name="conditions" value="Heç biri" class="w-5 h-5 text-primary rounded">
+                                    <span class="flex-1">Heç biri (Sağamlığım yaxşıdır)</span>
+                                    <span class="material-symbols-outlined text-slate-400">check_circle</span>
+                                </label>
+                            </div>
+                            
+                            <div class="flex justify-between mt-8">
+                                <button onclick="prevStep(2)" class="px-6 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl font-medium transition-colors flex items-center gap-2">
+                                    <span class="material-symbols-outlined">arrow_back</span>
+                                    Geri
+                                </button>
+                                <button onclick="nextStep(2)" class="px-6 py-3 bg-primary hover:bg-blue-600 text-white rounded-xl font-semibold transition-colors flex items-center gap-2">
+                                    Növbəti
+                                    <span class="material-symbols-outlined">arrow_forward</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 3: Allergies & Restrictions -->
+                    <div id="step3" class="step">
+                        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 md:p-8">
+                            <div class="flex items-center gap-3 mb-6">
+                                <div class="w-12 h-12 rounded-xl bg-danger/10 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-danger">block</span>
+                                </div>
+                                <div>
+                                    <h2 class="text-xl font-bold">Alergiyalar və Məhdudiyyətlər</h2>
+                                    <p class="text-slate-500 dark:text-slate-400 text-sm">Alergiyalarınızı və qadağan qidaları seçin</p>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-6">
+                                <div>
+                                    <h3 class="font-semibold mb-3 flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-sm">warning</span>
+                                        Alergiyalarınız
+                                    </h3>
+                                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                        <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                                            <input type="checkbox" name="allergies" value="Gluten" class="w-4 h-4 text-primary rounded">
+                                            <span class="text-sm">Gluten</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                                            <input type="checkbox" name="allergies" value="Laktoza" class="w-4 h-4 text-primary rounded">
+                                            <span class="text-sm">Laktoza</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                                            <input type="checkbox" name="allergies" value="Yerfındığı" class="w-4 h-4 text-primary rounded">
+                                            <span class="text-sm">Yerfındığı</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                                            <input type="checkbox" name="allergies" value="Balıq" class="w-4 h-4 text-primary rounded">
+                                            <span class="text-sm">Balıq</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                                            <input type="checkbox" name="allergies" value="Yumurta" class="w-4 h-4 text-primary rounded">
+                                            <span class="text-sm">Yumurta</span>
+                                        </label>
+                                    </div>
+                                    <div class="mt-3">
+                                        <input type="text" id="otherAllergy" placeholder="Digər alerqiya (qeyd edin)..." class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-colors">
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <h3 class="font-semibold mb-3 flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-sm">no_food</span>
+                                        Qadağan qidalar
+                                    </h3>
+                                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                        <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                                            <input type="checkbox" name="forbidden" value="Çörək" class="w-4 h-4 text-primary rounded">
+                                            <span class="text-sm">Çörək</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                                            <input type="checkbox" name="forbidden" value="Şəkər" class="w-4 h-4 text-primary rounded">
+                                            <span class="text-sm">Şəkər</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                                            <input type="checkbox" name="forbidden" value="Süd" class="w-4 h-4 text-primary rounded">
+                                            <span class="text-sm">Süd</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                                            <input type="checkbox" name="forbidden" value="Yumurta" class="w-4 h-4 text-primary rounded">
+                                            <span class="text-sm">Yumurta</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                                            <input type="checkbox" name="forbidden" value="Balıq" class="w-4 h-4 text-primary rounded">
+                                            <span class="text-sm">Balıq</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                                            <input type="checkbox" name="forbidden" value="Qırmızı ət" class="w-4 h-4 text-primary rounded">
+                                            <span class="text-sm">Qırmızı ət</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-between mt-8">
+                                <button onclick="prevStep(3)" class="px-6 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl font-medium transition-colors flex items-center gap-2">
+                                    <span class="material-symbols-outlined">arrow_back</span>
+                                    Geri
+                                </button>
+                                <button onclick="nextStep(3)" class="px-6 py-3 bg-primary hover:bg-blue-600 text-white rounded-xl font-semibold transition-colors flex items-center gap-2">
+                                    Növbəti
+                                    <span class="material-symbols-outlined">arrow_forward</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 4: Goals -->
+                    <div id="step4" class="step">
+                        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 md:p-8">
+                            <div class="flex items-center gap-3 mb-6">
+                                <div class="w-12 h-12 rounded-xl bg-health/10 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-health">target</span>
+                                </div>
+                                <div>
+                                    <h2 class="text-xl font-bold">Məqsədlər</h2>
+                                    <p class="text-slate-500 dark:text-slate-400 text-sm">Sağlamlıq məqsədlərinizi və pəhriz tercihinizi seçin</p>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-6">
+                                <div>
+                                    <h3 class="font-semibold mb-3">Əsas məqsədiniz</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <label class="flex items-center gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                                            <input type="radio" name="goal" value="Çəki atmaq" class="w-4 h-4 text-primary">
+                                            <div class="flex items-center gap-2">
+                                                <span class="material-symbols-outlined text-slate-400">trending_down</span>
+                                                <span>Çəki atmaq</span>
+                                            </div>
+                                        </label>
+                                        <label class="flex items-center gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                                            <input type="radio" name="goal" value="Çəki qazanmaq" class="w-4 h-4 text-primary">
+                                            <div class="flex items-center gap-2">
+                                                <span class="material-symbols-outlined text-slate-400">trending_up</span>
+                                                <span>Çəki qazanmaq</span>
+                                            </div>
+                                        </label>
+                                        <label class="flex items-center gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                                            <input type="radio" name="goal" value="Formada qalmaq" class="w-4 h-4 text-primary">
+                                            <div class="flex items-center gap-2">
+                                                <span class="material-symbols-outlined text-slate-400">fitness_center</span>
+                                                <span>Formada qalmaq</span>
+                                            </div>
+                                        </label>
+                                        <label class="flex items-center gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                                            <input type="radio" name="goal" value="Ümumi sağlamlıq" class="w-4 h-4 text-primary">
+                                            <div class="flex items-center gap-2">
+                                                <span class="material-symbols-outlined text-slate-400">health_and_safety</span>
+                                                <span>Ümumi sağlamlıq</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <h3 class="font-semibold mb-3">Pəhriz tipi</h3>
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                        <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                                            <input type="radio" name="diet" value="Adi" class="w-4 h-4 text-primary">
+                                            <span class="text-sm">Adi</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                                            <input type="radio" name="diet" value="Vegetarian" class="w-4 h-4 text-primary">
+                                            <span class="text-sm">Vegetarian</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                                            <input type="radio" name="diet" value="Vegan" class="w-4 h-4 text-primary">
+                                            <span class="text-sm">Vegan</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors">
+                                            <input type="radio" name="diet" value="Az yağlı" class="w-4 h-4 text-primary">
+                                            <span class="text-sm">Az yağlı</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-between mt-8">
+                                <button onclick="prevStep(4)" class="px-6 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl font-medium transition-colors flex items-center gap-2">
+                                    <span class="material-symbols-outlined">arrow_back</span>
+                                    Geri
+                                </button>
+                                <button onclick="finishQuestionnaire()" class="px-6 py-3 bg-primary hover:bg-blue-600 text-white rounded-xl font-semibold transition-colors flex items-center gap-2">
+                                    Davam et
+                                    <span class="material-symbols-outlined">arrow_forward</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 3: FILE UPLOAD -->
+    <section id="upload" class="section min-h-screen bg-slate-50 dark:bg-slate-900">
+        <div class="min-h-screen flex flex-col p-4 py-12">
+            <div class="max-w-2xl mx-auto w-full">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 md:p-8">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-primary">upload_file</span>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold">Laboratoriya Nəticələrini Yükləyin</h2>
+                            <p class="text-slate-500 dark:text-slate-400 text-sm">PDF və ya şəkil fayllarınızı yükləyin</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Drop Zone -->
+                    <div id="dropZone" class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl p-8 text-center hover:border-primary hover:bg-primary/5 transition-all cursor-pointer" onclick="document.getElementById('fileInput').click()">
+                        <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-4xl text-slate-400">cloud_upload</span>
+                        </div>
+                        <p class="font-medium mb-2">Faylı bura sürükləyin</p>
+                        <p class="text-sm text-slate-500 mb-4">Və ya</p>
+                        <button class="px-6 py-2 border border-slate-300 dark:border-slate-600 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                            Fayl seçmək üçün klikləyin
+                        </button>
+                        <p class="text-xs text-slate-400 mt-4">Dəstəklənən formatlar: PDF, JPG, PNG (maks. 10MB)</p>
+                    </div>
+                    
+                    <input type="file" id="fileInput" class="hidden" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFileSelect(event)">
+                    
+                    <!-- File Preview -->
+                    <div id="filePreview" class="hidden mt-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-green-600 dark:text-green-400">check_circle</span>
+                            <div class="flex-1">
+                                <p class="font-medium" id="fileName">fayl.pdf</p>
+                                <p class="text-sm text-green-600 dark:text-green-400">Fayl yükləndi</p>
+                            </div>
+                            <button onclick="clearFile()" class="p-2 hover:bg-green-100 dark:hover:bg-green-800 rounded-lg transition-colors">
+                                <span class="material-symbols-outlined text-green-600">close</span>
+                            </button>
+                        </div>
+                        <div id="imagePreview" class="hidden mt-4">
+                            <img id="previewImg" src="" alt="Preview" class="max-h-48 rounded-lg mx-auto">
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between mt-8">
+                        <button onclick="showSection('questionnaire')" class="px-6 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl font-medium transition-colors flex items-center gap-2">
+                            <span class="material-symbols-outlined">arrow_back</span>
+                            Əvvəlki
+                        </button>
+                        <button onclick="showSection('parameters')" class="px-6 py-3 bg-primary hover:bg-blue-600 text-white rounded-xl font-semibold transition-colors flex items-center gap-2">
+                            Davam et
+                            <span class="material-symbols-outlined">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 4: BLOOD PARAMETERS INPUT -->
+    <section id="parameters" class="section min-h-screen bg-slate-50 dark:bg-slate-900">
+        <div class="min-h-screen flex flex-col">
+            <!-- Header -->
+            <div class="bg-white dark:bg-slate-800 shadow-sm p-4 sticky top-0 z-10">
+                <div class="max-w-5xl mx-auto">
+                    <h2 class="text-lg font-bold mb-4">Qan Parametrləri</h2>
+                    <!-- Tab Navigation -->
+                    <div class="flex gap-2 overflow-x-auto pb-2">
+                        <button onclick="switchTab(0)" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white whitespace-nowrap" data-tab="0">
+                            Şəkər & Metabolizm
+                        </button>
+                        <button onclick="switchTab(1)" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 whitespace-nowrap" data-tab="1">
+                            Xolesterol
+                        </button>
+                        <button onclick="switchTab(2)" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 whitespace-nowrap" data-tab="2">
+                            Tiroid
+                        </button>
+                        <button onclick="switchTab(3)" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 whitespace-nowrap" data-tab="3">
+                            Qan
+                        </button>
+                        <button onclick="switchTab(4)" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 whitespace-nowrap" data-tab="4">
+                            Qaraciyər & Böyrək
+                        </button>
+                        <button onclick="switchTab(5)" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 whitespace-nowrap" data-tab="5">
+                            Vitaminlər
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Content -->
+            <div class="flex-1 p-4 py-8">
+                <div class="max-w-5xl mx-auto">
+                    
+                    <!-- Tab 0: Sugar & Metabolism -->
+                    <div id="tab0" class="tab-content active">
+                        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+                            <h3 class="text-lg font-semibold mb-6 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary">water_drop</span>
+                                Şəkər və Metabolizm
+                            </h3>
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div class="space-y-4">
+                                    <label class="block">
+                                        <span class="text-sm font-medium mb-1 block">Qan şəkəri (Gluqoza) mmol/L</span>
+                                        <input type="number" id="glucose" step="0.1" placeholder="5.5" 
+                                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-all"
+                                            onchange="validateInput(this, 3.9, 6.1)" oninput="validateInput(this, 3.9, 6.1)">
+                                        <span class="text-xs text-slate-500 mt-1 block">Referans: 3.9 - 6.1 mmol/L</span>
+                                    </label>
+                                </div>
+                                <div class="space-y-4">
+                                    <label class="block">
+                                        <span class="text-sm font-medium mb-1 block">HbA1c %</span>
+                                        <input type="number" id="hba1c" step="0.1" placeholder="5.5" 
+                                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-all"
+                                            onchange="validateInput(this, 4.0, 6.0)" oninput="validateInput(this, 4.0, 6.0)">
+                                        <span class="text-xs text-slate-500 mt-1 block">Referans: 4.0 - 6.0%</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tab 1: Cholesterol -->
+                    <div id="tab1" class="tab-content">
+                        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+                            <h3 class="text-lg font-semibold mb-6 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-warning">science</span>
+                                Xolesterol
+                            </h3>
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div class="space-y-4">
+                                    <label class="block">
+                                        <span class="text-sm font-medium mb-1 block">Ümumi xolesterol mmol/L</span>
+                                        <input type="number" id="totalCholesterol" step="0.1" placeholder="4.5" 
+                                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-all"
+                                            onchange="validateInput(this, 0, 5.2)" oninput="validateInput(this, 0, 5.2)">
+                                        <span class="text-xs text-slate-500 mt-1 block">Referans: < 5.2 mmol/L</span>
+                                    </label>
+                                    <label class="block">
+                                        <span class="text-sm font-medium mb-1 block">LDL mmol/L</span>
+                                        <input type="number" id="ldl" step="0.1" placeholder="2.5" 
+                                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-all"
+                                            onchange="validateInput(this, 0, 3.0)" oninput="validateInput(this, 0, 3.0)">
+                                        <span class="text-xs text-slate-500 mt-1 block">Referans: < 3.0 mmol/L</span>
+                                    </label>
+                                </div>
+                                <div class="space-y-4">
+                                    <label class="block">
+                                        <span class="text-sm font-medium mb-1 block">HDL mmol/L</span>
+                                        <input type="number" id="hdl" step="0.1" placeholder="1.2" 
+                                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-all"
+                                            onchange="validateInput(this, 1.0, 999)" oninput="validateInput(this, 1.0, 999)">
+                                        <span class="text-xs text-slate-500 mt-1 block">Referans: > 1.0 mmol/L</span>
+                                    </label>
+                                    <label class="block">
+                                        <span class="text-sm font-medium mb-1 block">Trigliseridlər mmol/L</span>
+                                        <input type="number" id="triglycerides" step="0.1" placeholder="1.2" 
+                                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-all"
+                                            onchange="validateInput(this, 0, 1.7)" oninput="validateInput(this, 0, 1.7)">
+                                        <span class="text-xs text-slate-500 mt-1 block">Referans: < 1.7 mmol/L</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tab 2: Thyroid -->
+                    <div id="tab2" class="tab-content">
+                        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+                            <h3 class="text-lg font-semibold mb-6 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary">person_alert</span>
+                                Tiroid
+                            </h3>
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div class="space-y-4">
+                                    <label class="block">
+                                        <span class="text-sm font-medium mb-1 block">TSH mIU/L</span>
+                                        <input type="number" id="tsh" step="0.01" placeholder="2.5" 
+                                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-all"
+                                            onchange="validateInput(this, 0.4, 4.0)" oninput="validateInput(this, 0.4, 4.0)">
+                                        <span class="text-xs text-slate-500 mt-1 block">Referans: 0.4 - 4.0 mIU/L</span>
+                                    </label>
+                                </div>
+                                <div class="space-y-4">
+                                    <label class="block">
+                                        <span class="text-sm font-medium mb-1 block">Free T3 pmol/L</span>
+                                        <input type="number" id="ft3" step="0.1" placeholder="4.5" 
+                                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-all">
+                                        <span class="text-xs text-slate-500 mt-1 block">Referans: 3.5 - 6.5 pmol/L</span>
+                                    </label>
+                                </div>
+                                <div class="space-y-4">
+                                    <label class="block">
+                                        <span class="text-sm font-medium mb-1 block">Free T4 pmol/L</span>
+                                        <input type="number" id="ft4" step="0.1" placeholder="16" 
+                                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-all">
+                                        <span class="text-xs text-slate-500 mt-1 block">Referans: 11 - 22 pmol/L</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tab 3: Blood -->
+                    <div id="tab3" class="tab-content">
+                        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+                            <h3 class="text-lg font-semibold mb-6 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-danger">bloodtype</span>
+                                Qan
+                            </h3>
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div class="space-y-4">
+                                    <label class="block">
+                                        <span class="text-sm font-medium mb-1 block">Hemoglobin g/dL</span>
+                                        <input type="number" id="hemoglobin" step="0.1" placeholder="13.5" 
+                                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-all"
+                                            onchange="validateInput(this, 12, 16)" oninput="validateInput(this, 12, 16)">
+                                        <span class="text-xs text-slate-500 mt-1 block">Referans: 12 - 16 g/dL</span>
+                                    </label>
+                                    <label class="block">
+                                        <span class="text-sm font-medium mb-1 block">WBC 10⁹/L</span>
+                                        <input type="number" id="wbc" step="0.1" placeholder="7.0" 
+                                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-all">
+                                        <span class="text-xs text-slate-500 mt-1 block">Referans: 4.0 - 10.0 × 10⁹/L</span>
+                                    </label>
+                                    <label class="block">
+                                        <span class="text-sm font-medium mb-1 block">Trombositlər 10⁹/L</span>
+                                        <input type="number" id="platelets" step="1" placeholder="250" 
+                                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-all">
+                                        <span class="text-xs text-slate-500 mt-1 block">Referans: 150 - 400 × 10⁹/L</span>
+                                    </label>
+                                </div>
+                                <div class="space-y-4">
+                                    <label class="block">
+                                        <span class="text-sm font-medium mb-1 block">Hematokrit %</span>
+                                        <input type="number" id="hematocrit" step="0.1" placeholder="42" 
+                                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-all">
+                                        <span class="text-xs text-slate-500 mt-1 block">Referans: 36 - 46%</span>
+                                    </label>
+                                    <label class="block">
+                                        <span class="text-sm font-medium mb-1 block">RBC 10¹²/L</span>
+                                        <input type="number" id="rbc" step="0.1" placeholder="4.5" 
+                                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-all">
+                                        <span class="text-xs text-slate-500 mt-1 block">Referans: 4.0 - 5.5 × 10¹²/L</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tab 4: Liver & Kidney -->
+                    <div id="tab4" class="tab-content">
+                        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+                            <h3 class="text-lg font-semibold mb-6 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-warning">medical_services</span>
+                                Qaraciyər və Böyrək
+                            </h3>
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div class="space-y-4">
+                                    <label class="block">
+                                        <span class="text-sm font-medium mb-1 block">ALT U/L</span>
+                                        <input type="number" id="alt" step="1" placeholder="25" 
+                                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-all"
+                                            onchange="validateInput(this, 0, 41)" oninput="validateInput(this, 0, 41)">
+                                        <span class="text-xs text-slate-500 mt-1 block">Referans: 0 - 41 U/L</span>
+                                    </label>
+                                    <label class="block">
+                                        <span class="text-sm font-medium mb-1 block">AST U/L</span>
+                                        <input type="number" id="ast" step="1" placeholder="22" 
+                                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-all"
+                                            onchange="validateInput(this, 0, 40)" oninput="validateInput(this, 0, 40)">
+                                        <span class="text-xs text-slate-500 mt-1 block">Referans: 0 - 40 U/L</span>
+                                    </label>
+                                    <label class="block">
+                                        <span class="text-sm font-medium mb-1 block">Qamma-GT U/L</span>
+                                        <input type="number" id="ggt" step="1" placeholder="30" 
+                                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-all">
+                                        <span class="text-xs text-slate-500 mt-1 block">Referans: 10 - 71 U/L (kişi), 6 - 42 U/L (qadın)</span>
+                                    </label>
+                                </div>
+                                <div class="space-y-4">
+                                    <label class="block">
+                                        <span class="text-sm font-medium mb-1 block">Kreatinin µmol/L</span>
+                                        <input type="number" id="creatinine" step="1" placeholder="80" 
+                                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-all">
+                                        <span class="text-xs text-slate-500 mt-1 block">Referans: 62 - 106 µmol/L (kişi), 44 - 80 (qadın)</span>
+                                    </label>
+                                    <label class="block">
+                                        <span class="text-sm font-medium mb-1 block">Üre mmol/L</span>
+                                        <input type="number" id="urea" step="0.1" placeholder="5.0" 
+                                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-all">
+                                        <span class="text-xs text-slate-500 mt-1 block">Referans: 2.5 - 7.1 mmol/L</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tab 5: Vitamins -->
+                    <div id="tab5" class="tab-content">
+                        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+                            <h3 class="text-lg font-semibold mb-6 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-health">medication</span>
+                                Vitaminlər
+                            </h3>
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div class="space-y-4">
+                                    <label class="block">
+                                        <span class="text-sm font-medium mb-1 block">D Vitamini ng/mL</span>
+                                        <input type="number" id="vitaminD" step="0.1" placeholder="35" 
+                                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-all"
+                                            onchange="validateInput(this, 30, 100)" oninput="validateInput(this, 30, 100)">
+                                        <span class="text-xs text-slate-500 mt-1 block">Referans: 30 - 100 ng/mL</span>
+                                    </label>
+                                    <label class="block">
+                                        <span class="text-sm font-medium mb-1 block">B12 pg/mL</span>
+                                        <input type="number" id="b12" step="1" placeholder="400" 
+                                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-all">
+                                        <span class="text-xs text-slate-500 mt-1 block">Referans: 200 - 900 pg/mL</span>
+                                    </label>
+                                    <label class="block">
+                                        <span class="text-sm font-medium mb-1 block">Ferritin ng/mL</span>
+                                        <input type="number" id="ferritin" step="1" placeholder="80" 
+                                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-all">
+                                        <span class="text-xs text-slate-500 mt-1 block">Referans: 15 - 150 ng/mL (qadın), 30 - 400 (kişi)</span>
+                                    </label>
+                                </div>
+                                <div class="space-y-4">
+                                    <label class="block">
+                                        <span class="text-sm font-medium mb-1 block">Dəmir µmol/L</span>
+                                        <input type="number" id="iron" step="0.1" placeholder="15" 
+                                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-all">
+                                        <span class="text-xs text-slate-500 mt-1 block">Referans: 11 - 30 µmol/L</span>
+                                    </label>
+                                    <label class="block">
+                                        <span class="text-sm font-medium mb-1 block">Kalsium mmol/L</span>
+                                        <input type="number" id="calcium" step="0.01" placeholder="2.4" 
+                                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:border-primary focus:outline-none transition-all">
+                                        <span class="text-xs text-slate-500 mt-1 block">Referans: 2.1 - 2.6 mmol/L</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Analyze Button -->
+                    <div class="flex justify-between items-center mt-8">
+                        <button onclick="showSection('upload')" class="px-6 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl font-medium transition-colors flex items-center gap-2">
+                            <span class="material-symbols-outlined">arrow_back</span>
+                            Əvvəlki
+                        </button>
+                        <button onclick="analyzeAndShowResults()" class="px-8 py-4 bg-health hover:bg-emerald-600 text-white rounded-xl font-semibold transition-colors shadow-lg shadow-health/30 flex items-center gap-2">
+                            <span class="material-symbols-outlined">analytics</span>
+                            Təhlil Et
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 5: ANALYSIS RESULTS DASHBOARD -->
+    <section id="results" class="section min-h-screen bg-slate-50 dark:bg-slate-900">
+        <div class="flex min-h-screen">
+            <!-- Sidebar -->
+            <aside class="hidden lg:block w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 fixed h-screen overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex items-center gap-3 mb-8">
+                        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-cyan-400 flex items-center justify-center text-white shadow-lg shadow-primary/30">
+                            <span class="material-symbols-outlined">monitor_heart</span>
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">SmartHealth</p>
+                            <p class="font-bold">Qan Analizi</p>
+                        </div>
+                    </div>
+                    
+                    <nav class="space-y-2">
+                        <button onclick="showSection('results')" data-section="results" class="nav-link active w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-colors">
+                            <span class="material-symbols-outlined">analytics</span>
+                            Təhlil
+                        </button>
+                        <button onclick="showSection('mealplan')" data-section="mealplan" class="nav-link w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-colors">
+                            <span class="material-symbols-outlined">restaurant</span>
+                            Qidalanma Planı
+                        </button>
+                        <button onclick="showSection('timeline')" data-section="timeline" class="nav-link w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-colors">
+                            <span class="material-symbols-outlined">timeline</span>
+                            Təlimatlar
+                        </button>
+                        <button onclick="resetApp()" class="w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                            <span class="material-symbols-outlined">refresh</span>
+                            Yenidən Başla
+                        </button>
+                    </nav>
+                    
+                    <!-- Doctor Card -->
+                    <div class="mt-8 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-primary">person</span>
+                            </div>
+                            <div>
+                                <p class="font-medium text-sm">Dr. Əhmədov</p>
+                                <p class="text-xs text-slate-500">Həkim-dietoloq</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+            
+            <!-- Main Content -->
+            <main class="flex-1 lg:ml-64">
+                <!-- Mobile Header -->
+                <header class="lg:hidden bg-white dark:bg-slate-800 p-4 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">monitor_heart</span>
+                            <span class="font-bold">SmartHealth</span>
+                        </div>
+                        <button onclick="toggleMobileMenu()" class="p-2">
+                            <span class="material-symbols-outlined">menu</span>
+                        </button>
+                    </div>
+                </header>
+                
+                <!-- Mobile Menu -->
+                <div id="mobileMenu" class="lg:hidden hidden bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4">
+                    <nav class="space-y-2">
+                        <button onclick="showSection('results')" class="w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 bg-primary/10 text-primary">
+                            <span class="material-symbols-outlined">analytics</span>
+                            Təhlil
+                        </button>
+                        <button onclick="showSection('mealplan')" class="w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-slate-700">
+                            <span class="material-symbols-outlined">restaurant</span>
+                            Qidalanma Planı
+                        </button>
+                        <button onclick="showSection('timeline')" class="w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-slate-700">
+                            <span class="material-symbols-outlined">timeline</span>
+                            Təlimatlar
+                        </button>
+                        <button onclick="resetApp()" class="w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700">
+                            <span class="material-symbols-outlined">refresh</span>
+                            Yenidən Başla
+                        </button>
+                    </nav>
+                </div>
+                
+                <!-- Page Header -->
+                <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur border-b border-slate-200 dark:border-slate-700 sticky top-0 lg:top-0 z-10">
+                    <div class="p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h1 class="text-2xl font-bold">Qan Analizi Nəticələri</h1>
+                            <p class="text-slate-500 text-sm mt-1">Analiz tarixi: <span id="analysisDate">-</span></p>
+                        </div>
+                        <div class="flex gap-2 flex-wrap">
+                            <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                                <span class="material-symbols-outlined" id="resultsThemeIcon">light_mode</span>
+                            </button>
+                            <button onclick="shareWhatsApp()" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors flex items-center gap-2">
+                                <span class="material-symbols-outlined text-sm">chat</span>
+                                WhatsApp
+                            </button>
+                            <button onclick="downloadJSON()" class="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2">
+                                <span class="material-symbols-outlined text-sm">download</span>
+                                JSON
+                            </button>
+                            <button onclick="downloadPDF()" class="px-4 py-2 bg-primary hover:bg-blue-600 text-white rounded-lg font-medium transition-colors flex items-center gap-2">
+                                <span class="material-symbols-outlined text-sm">picture_as_pdf</span>
+                                PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Results Content -->
+                <div class="p-4 md:p-6 space-y-6">
+                    
+                    <!-- Critical Alert (Conditional) -->
+                    <div id="criticalAlert" class="hidden bg-danger/10 border border-danger/30 rounded-xl p-4 flex items-center gap-3">
+                        <span class="material-symbols-outlined text-danger">emergency</span>
+                        <div>
+                            <p class="font-semibold text-danger">DİQQƏT: Dərhal həkimə müraciət edin!</p>
+                            <p class="text-sm text-slate-600 dark:text-slate-400">Bəzi göstəriciləriniz kritik həddədir</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Summary Cards -->
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="bg-danger/10 rounded-xl p-5 border border-danger/20">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="material-symbols-outlined text-danger">error</span>
+                                <span class="text-2xl font-bold text-danger" id="criticalCount">0</span>
+                            </div>
+                            <p class="font-medium">Kritik xəbərdarlıqlar</p>
+                            <p class="text-sm text-slate-500">Dərhal nəzarət tələb olunur</p>
+                        </div>
+                        <div class="bg-warning/10 rounded-xl p-5 border border-warning/20">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="material-symbols-outlined text-warning">warning</span>
+                                <span class="text-2xl font-bold text-warning" id="warningCount">0</span>
+                            </div>
+                            <p class="font-medium">Xəbərdarlıqlar</p>
+                            <p class="text-sm text-slate-500">Nəzarət altında saxlanmalıdır</p>
+                        </div>
+                        <div class="bg-health/10 rounded-xl p-5 border border-health/20">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="material-symbols-outlined text-health">check_circle</span>
+                                <span class="text-2xl font-bold text-health" id="normalCount">0</span>
+                            </div>
+                            <p class="font-medium">Normal göstəricilər</p>
+                            <p class="text-sm text-slate-500">Referans aralığında</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Main Grid -->
+                    <div class="grid lg:grid-cols-3 gap-6">
+                        <!-- Left Column (2/3) -->
+                        <div class="lg:col-span-2 space-y-6">
+                            
+                            <!-- Circular Gauges -->
+                            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+                                <h3 class="font-semibold mb-6">Əsas Göstəricilər</h3>
+                                <div class="grid grid-cols-3 gap-4">
+                                    <!-- Glucose Gauge -->
+                                    <div class="text-center">
+                                        <div class="relative w-24 h-24 mx-auto mb-3">
+                                            <svg class="w-24 h-24 gauge-circle" viewBox="0 0 100 100">
+                                                <circle cx="50" cy="50" r="45" fill="none" stroke="#e2e8f0" stroke-width="8"/>
+                                                <circle id="glucoseCircle" cx="50" cy="50" r="45" fill="none" stroke="#f59e0b" stroke-width="8" 
+                                                    stroke-dasharray="283" stroke-dashoffset="283" stroke-linecap="round"/>
+                                            </svg>
+                                            <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                                <span id="glucoseValue" class="text-lg font-bold">-</span>
+                                                <span class="text-xs text-slate-500">mmol/L</span>
+                                            </div>
+                                        </div>
+                                        <p class="text-sm font-medium">Glükoza</p>
+                                    </div>
+                                    
+                                    <!-- Cholesterol Gauge -->
+                                    <div class="text-center">
+                                        <div class="relative w-24 h-24 mx-auto mb-3">
+                                            <svg class="w-24 h-24 gauge-circle" viewBox="0 0 100 100">
+                                                <circle cx="50" cy="50" r="45" fill="none" stroke="#e2e8f0" stroke-width="8"/>
+                                                <circle id="cholesterolCircle" cx="50" cy="50" r="45" fill="none" stroke="#10b981" stroke-width="8" 
+                                                    stroke-dasharray="283" stroke-dashoffset="283" stroke-linecap="round"/>
+                                            </svg>
+                                            <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                                <span id="cholesterolValue" class="text-lg font-bold">-</span>
+                                                <span class="text-xs text-slate-500">mmol/L</span>
+                                            </div>
+                                        </div>
+                                        <p class="text-sm font-medium">Xolesterol</p>
+                                    </div>
+                                    
+                                    <!-- TSH Gauge -->
+                                    <div class="text-center">
+                                        <div class="relative w-24 h-24 mx-auto mb-3">
+                                            <svg class="w-24 h-24 gauge-circle" viewBox="0 0 100 100">
+                                                <circle cx="50" cy="50" r="45" fill="none" stroke="#e2e8f0" stroke-width="8"/>
+                                                <circle id="tshCircle" cx="50" cy="50" r="45" fill="none" stroke="#3780f6" stroke-width="8" 
+                                                    stroke-dasharray="283" stroke-dashoffset="283" stroke-linecap="round"/>
+                                            </svg>
+                                            <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                                <span id="tshValue" class="text-lg font-bold">-</span>
+                                                <span class="text-xs text-slate-500">mIU/L</span>
+                                            </div>
+                                        </div>
+                                        <p class="text-sm font-medium">TSH</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Detailed Table -->
+                            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h3 class="font-semibold">Ətraflı Nəticələr</h3>
+                                    <button onclick="toggleTableExpand()" id="expandTableBtn" class="text-sm text-primary hover:underline">
+                                        Hamısını göstər
+                                    </button>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-sm">
+                                        <thead>
+                                            <tr class="border-b border-slate-200 dark:border-slate-700">
+                                                <th class="text-left py-3 px-2">Göstərici</th>
+                                                <th class="text-center py-3 px-2">Nəticə</th>
+                                                <th class="text-center py-3 px-2">Referans</th>
+                                                <th class="text-center py-3 px-2">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="resultsTableBody">
+                                            <!-- Filled by JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Right Column (1/3) -->
+                        <div class="space-y-6">
+                            
+                            <!-- Primary Recommendation -->
+                            <div class="bg-gradient-to-br from-primary to-blue-600 rounded-2xl shadow-lg p-6 text-white">
+                                <div class="flex items-center gap-2 mb-4">
+                                    <span class="material-symbols-outlined">lightbulb</span>
+                                    <h3 class="font-semibold">Sağlamlıq Təklifi</h3>
+                                </div>
+                                <p id="primaryRecommendation" class="text-sm leading-relaxed mb-4">
+                                    Analizlərinizi daxil etdikdən sonra şəxsi tövsiyələriniz burada görünəcək.
+                                </p>
+                                <button onclick="showSection('mealplan')" class="w-full py-3 bg-white/20 hover:bg-white/30 rounded-xl font-medium transition-colors flex items-center justify-center gap-2">
+                                    Qidalanma Planını Gör
+                                    <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                                </button>
+                            </div>
+                            
+                            <!-- Doctor's Note -->
+                            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+                                <div class="flex items-center gap-2 mb-4">
+                                    <span class="material-symbols-outlined text-primary">notes</span>
+                                    <h3 class="font-semibold">Həkim Qeydi</h3>
+                                </div>
+                                <blockquote class="text-sm text-slate-600 dark:text-slate-300 italic border-l-4 border-primary pl-4">
+                                    "Müntəzəm qan analizi və sağlam qidalanma həyat tərzinizin əsasını təşkil etməlidir. Nəticələrinizi izləməyə davam edin."
+                                </blockquote>
+                                <div class="flex items-center gap-2 mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl">
+                                    <span class="w-2 h-2 rounded-full bg-amber-500 pulsing-dot"></span>
+                                    <span class="text-sm text-amber-700 dark:text-amber-300">Nəzarət Altında</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Lifestyle Score -->
+                            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+                                <h3 class="font-semibold mb-4">Sağlamlıq Skoru</h3>
+                                <div class="relative pt-2">
+                                    <div class="h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                        <div id="healthScoreBar" class="h-full bg-gradient-to-r from-health to-primary rounded-full transition-all duration-500" style="width: 0%"></div>
+                                    </div>
+                                    <div class="flex justify-between mt-2 text-xs text-slate-500">
+                                        <span>0</span>
+                                        <span id="healthScoreValue" class="font-bold text-primary text-base">0%</span>
+                                        <span>100</span>
+                                    </div>
+                                </div>
+                                <p id="healthScoreText" class="text-sm text-slate-500 mt-3">
+                                    Analiz nəticələrinizi daxil edin
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </section>
+
+    <!-- SECTION 6: MEAL PLAN -->
+    <section id="mealplan" class="section min-h-screen bg-slate-50 dark:bg-slate-900">
+        <div class="flex min-h-screen">
+            <!-- Sidebar -->
+            <aside class="hidden lg:block w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 fixed h-screen overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex items-center gap-3 mb-8">
+                        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-cyan-400 flex items-center justify-center text-white shadow-lg shadow-primary/30">
+                            <span class="material-symbols-outlined">monitor_heart</span>
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">SmartHealth</p>
+                            <p class="font-bold">Qan Analizi</p>
+                        </div>
+                    </div>
+                    
+                    <nav class="space-y-2">
+                        <button onclick="showSection('results')" data-section="results" class="nav-link w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-colors">
+                            <span class="material-symbols-outlined">analytics</span>
+                            Təhlil
+                        </button>
+                        <button onclick="showSection('mealplan')" data-section="mealplan" class="nav-link active w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-colors">
+                            <span class="material-symbols-outlined">restaurant</span>
+                            Qidalanma Planı
+                        </button>
+                        <button onclick="showSection('timeline')" data-section="timeline" class="nav-link w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-colors">
+                            <span class="material-symbols-outlined">timeline</span>
+                            Təlimatlar
+                        </button>
+                        <button onclick="resetApp()" class="w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                            <span class="material-symbols-outlined">refresh</span>
+                            Yenidən Başla
+                        </button>
+                    </nav>
+                </div>
+            </aside>
+            
+            <!-- Main Content -->
+            <main class="flex-1 lg:ml-64">
+                <!-- Mobile Header -->
+                <header class="lg:hidden bg-white dark:bg-slate-800 p-4 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">monitor_heart</span>
+                            <span class="font-bold">SmartHealth</span>
+                        </div>
+                        <button onclick="toggleMobileMenu()" class="p-2">
+                            <span class="material-symbols-outlined">menu</span>
+                        </button>
+                    </div>
+                </header>
+                
+                <!-- Header -->
+                <div class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 md:p-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <div class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm mb-2">
+                                <span class="material-symbols-outlined text-sm">health_and_safety</span>
+                                Analizlərinizə Əsasən
+                            </div>
+                            <h1 class="text-2xl font-bold">Şəxsi Qidalanma Strategiyası</h1>
+                            <p id="mealPlanSubtitle" class="text-slate-500 text-sm mt-1">Sağlamlıq göstəricilərinizə uyğun hazırlanmış</p>
+                        </div>
+                        <button onclick="downloadPDF()" class="px-6 py-3 bg-primary hover:bg-blue-600 text-white rounded-xl font-semibold transition-colors flex items-center gap-2">
+                            <span class="material-symbols-outlined">picture_as_pdf</span>
+                            PDF Yüklə
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Health Warning Section (Conditional) -->
+                <div id="mealWarning" class="hidden mx-4 md:mx-6 mt-6 p-4 bg-danger/10 border border-danger/30 rounded-xl flex items-center gap-3">
+                    <span class="material-symbols-outlined text-danger">warning</span>
+                    <div class="flex-1">
+                        <p class="font-semibold text-danger">Qadağan olan qidalar</p>
+                        <div class="flex flex-wrap gap-2 mt-2">
+                            <span class="px-3 py-1 bg-white dark:bg-slate-800 rounded-lg text-sm">Raffinə olunmuş şəkər</span>
+                            <span class="px-3 py-1 bg-white dark:bg-slate-800 rounded-lg text-sm">Ağ un</span>
+                            <span class="px-3 py-1 bg-white dark:bg-slate-800 rounded-lg text-sm">Qazlı içkilər</span>
+                            <span class="px-3 py-1 bg-white dark:bg-slate-800 rounded-lg text-sm">Qızardılmış kartof</span>
+                            <span class="px-3 py-1 bg-white dark:bg-slate-800 rounded-lg text-sm">İşlənmiş ət</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 7-Day Meal Plan -->
+                <div class="p-4 md:p-6">
+                    <div class="grid md:grid-cols-2 xl:grid-cols-4 gap-4" id="mealPlanGrid">
+                        <!-- Filled by JavaScript -->
+                    </div>
+                </div>
+            </main>
+        </div>
+    </section>
+
+    <!-- SECTION 7: HEALTH TIMELINE -->
+    <section id="timeline" class="section min-h-screen bg-slate-50 dark:bg-slate-900">
+        <div class="flex min-h-screen">
+            <!-- Sidebar -->
+            <aside class="hidden lg:block w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 fixed h-screen overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex items-center gap-3 mb-8">
+                        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-cyan-400 flex items-center justify-center text-white shadow-lg shadow-primary/30">
+                            <span class="material-symbols-outlined">monitor_heart</span>
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">SmartHealth</p>
+                            <p class="font-bold">Qan Analizi</p>
+                        </div>
+                    </div>
+                    
+                    <nav class="space-y-2">
+                        <button onclick="showSection('results')" data-section="results" class="nav-link w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-colors">
+                            <span class="material-symbols-outlined">analytics</span>
+                            Təhlil
+                        </button>
+                        <button onclick="showSection('mealplan')" data-section="mealplan" class="nav-link w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-colors">
+                            <span class="material-symbols-outlined">restaurant</span>
+                            Qidalanma Planı
+                        </button>
+                        <button onclick="showSection('timeline')" data-section="timeline" class="nav-link active w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-colors">
+                            <span class="material-symbols-outlined">timeline</span>
+                            Təlimatlar
+                        </button>
+                        <button onclick="resetApp()" class="w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                            <span class="material-symbols-outlined">refresh</span>
+                            Yenidən Başla
+                        </button>
+                    </nav>
+                </div>
+            </aside>
+            
+            <!-- Main Content -->
+            <main class="flex-1 lg:ml-64">
+                <!-- Mobile Header -->
+                <header class="lg:hidden bg-white dark:bg-slate-800 p-4 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">monitor_heart</span>
+                            <span class="font-bold">SmartHealth</span>
+                        </div>
+                        <button onclick="toggleMobileMenu()" class="p-2">
+                            <span class="material-symbols-outlined">menu</span>
+                        </button>
+                    </div>
+                </header>
+                
+                <!-- Header -->
+                <div class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 md:p-6">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary text-3xl">timeline</span>
+                        <div>
+                            <h1 class="text-2xl font-bold">Sağlamlıq Təlimatı</h1>
+                            <p class="text-slate-500 text-sm">Sağlamlıq yolçuluğunuzun addım-addım planı</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Timeline -->
+                <div class="p-4 md:p-8">
+                    <div class="max-w-3xl mx-auto relative">
+                        <!-- Vertical Line -->
+                        <div class="absolute left-6 md:left-8 top-0 bottom-0 w-0.5 bg-slate-200 dark:bg-slate-700"></div>
+                        
+                        <!-- Step 1: Immediate -->
+                        <div class="relative flex gap-4 md:gap-6 mb-8">
+                            <div class="w-12 md:w-16 flex-shrink-0 flex justify-center">
+                                <div class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-health/20 flex items-center justify-center border-4 border-white dark:border-slate-800 z-10">
+                                    <span class="material-symbols-outlined text-health text-xl md:text-2xl">flash_on</span>
+                                </div>
+                            </div>
+                            <div class="flex-1 bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-5 md:p-6">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="px-2 py-1 rounded-lg bg-health/10 text-health text-xs font-medium">Dərhal</span>
+                                    <span class="text-sm text-slate-500">İlk 24 saat</span>
+                                </div>
+                                <h3 class="text-lg font-bold mb-2">Detoks Başlanğıcı</h3>
+                                <p class="text-slate-600 dark:text-slate-300 text-sm mb-4">Bədəndəki ödəmi atmaq və metabolizmi sürətləndirmək üçün ilk addımlar</p>
+                                <div class="space-y-2">
+                                    <label class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                        <input type="checkbox" class="timeline-check w-5 h-5 text-health rounded" data-step="1">
+                                        <span class="text-sm">Hər gün 10,000 addım atın</span>
+                                    </label>
+                                    <label class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                        <input type="checkbox" class="timeline-check w-5 h-5 text-health rounded" data-step="1">
+                                        <span class="text-sm">Gündə 2.5L su için</span>
+                                    </label>
+                                    <label class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                        <input type="checkbox" class="timeline-check w-5 h-5 text-health rounded" data-step="1">
+                                        <span class="text-sm">Şəkəri tam kəsın</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 2: Short Term -->
+                        <div class="relative flex gap-4 md:gap-6 mb-8">
+                            <div class="w-12 md:w-16 flex-shrink-0 flex justify-center">
+                                <div class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-warning/20 flex items-center justify-center border-4 border-white dark:border-slate-800 z-10">
+                                    <span class="material-symbols-outlined text-warning text-xl md:text-2xl">update</span>
+                                </div>
+                            </div>
+                            <div class="flex-1 bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-5 md:p-6">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="px-2 py-1 rounded-lg bg-warning/10 text-warning text-xs font-medium">Qısa müddətli</span>
+                                    <span class="text-sm text-slate-500">1-2 həftə</span>
+                                </div>
+                                <h3 class="text-lg font-bold mb-2">Vərdişlərin Formalaşması</h3>
+                                <p class="text-slate-600 dark:text-slate-300 text-sm mb-4">Yeni sağlamlıq vərdişlərinizi gücləndirmə mərhələsi</p>
+                                <div class="space-y-2">
+                                    <label class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                        <input type="checkbox" class="timeline-check w-5 h-5 text-warning rounded" data-step="2">
+                                        <span class="text-sm">Həftədə 3 dəfə idman</span>
+                                    </label>
+                                    <label class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                        <input type="checkbox" class="timeline-check w-5 h-5 text-warning rounded" data-step="2">
+                                        <span class="text-sm">Gündə 7 saat yuxu</span>
+                                    </label>
+                                    <label class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                        <input type="checkbox" class="timeline-check w-5 h-5 text-warning rounded" data-step="2">
+                                        <span class="text-sm">Stress idarəetmə texnikaları</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 3: Medium Term -->
+                        <div class="relative flex gap-4 md:gap-6 mb-8">
+                            <div class="w-12 md:w-16 flex-shrink-0 flex justify-center">
+                                <div class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-primary/20 flex items-center justify-center border-4 border-white dark:border-slate-800 z-10">
+                                    <span class="material-symbols-outlined text-primary text-xl md:text-2xl">calendar_month</span>
+                                </div>
+                            </div>
+                            <div class="flex-1 bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-5 md:p-6">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="px-2 py-1 rounded-lg bg-primary/10 text-primary text-xs font-medium">Orta müddətli</span>
+                                    <span class="text-sm text-slate-500">1 ay</span>
+                                </div>
+                                <h3 class="text-lg font-bold mb-2">Davamlı Dəyişiklik</h3>
+                                <p class="text-slate-600 dark:text-slate-300 text-sm mb-4">Qidalanma vərdişlərinin tam oturuşması və nəticələrin görünməsi</p>
+                                <div class="space-y-2">
+                                    <label class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                        <input type="checkbox" class="timeline-check w-5 h-5 text-primary rounded" data-step="3">
+                                        <span class="text-sm">Gündəlik qida jurnalı tutun</span>
+                                    </label>
+                                    <label class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                        <input type="checkbox" class="timeline-check w-5 h-5 text-primary rounded" data-step="3">
+                                        <span class="text-sm">Həftəlik çəki ölçmələri</span>
+                                    </label>
+                                    <label class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                        <input type="checkbox" class="timeline-check w-5 h-5 text-primary rounded" data-step="3">
+                                        <span class="text-sm">Mətbəxdə yeni reseptlər</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 4: Long Term -->
+                        <div class="relative flex gap-4 md:gap-6">
+                            <div class="w-12 md:w-16 flex-shrink-0 flex justify-center">
+                                <div class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center border-4 border-white dark:border-slate-800 z-10">
+                                    <span class="material-symbols-outlined text-slate-600 dark:text-slate-300 text-xl md:text-2xl">verified</span>
+                                </div>
+                            </div>
+                            <div class="flex-1 bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-5 md:p-6">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300 text-xs font-medium">Uzun müddətli</span>
+                                    <span class="text-sm text-slate-500">3 ay</span>
+                                </div>
+                                <h3 class="text-lg font-bold mb-2">Tam Bərpa və Qoruma</h3>
+                                <p class="text-slate-600 dark:text-slate-300 text-sm mb-4">Sağlamlıq məqsədlərinizə çatmaq və nəticələri qorumaq</p>
+                                <div class="space-y-2">
+                                    <label class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                        <input type="checkbox" class="timeline-check w-5 h-5 text-slate-600 rounded" data-step="4">
+                                        <span class="text-sm">Təkrar qan analizi etdirin</span>
+                                    </label>
+                                    <label class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                        <input type="checkbox" class="timeline-check w-5 h-5 text-slate-600 rounded" data-step="4">
+                                        <span class="text-sm">Həkim müayinəsi</span>
+                                    </label>
+                                    <label class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                        <input type="checkbox" class="timeline-check w-5 h-5 text-slate-600 rounded" data-step="4">
+                                        <span class="text-sm">Yeni sağlamlıq hədəfləri</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </section>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        // Global State
+        let appData = {};
+        let currentStep = 1;
+        let currentTab = 0;
+
+        // Reference Ranges for Parameters
+        const referenceRanges = {
+            glucose: { min: 3.9, max: 6.1, unit: 'mmol/L', name: 'Qan şəkəri' },
+            hba1c: { min: 4.0, max: 6.0, unit: '%', name: 'HbA1c' },
+            totalCholesterol: { min: 0, max: 5.2, unit: 'mmol/L', name: 'Ümumi xolesterol' },
+            ldl: { min: 0, max: 3.0, unit: 'mmol/L', name: 'LDL' },
+            hdl: { min: 1.0, max: 999, unit: 'mmol/L', name: 'HDL' },
+            triglycerides: { min: 0, max: 1.7, unit: 'mmol/L', name: 'Trigliseridlər' },
+            tsh: { min: 0.4, max: 4.0, unit: 'mIU/L', name: 'TSH' },
+            ft3: { min: 3.5, max: 6.5, unit: 'pmol/L', name: 'Free T3' },
+            ft4: { min: 11, max: 22, unit: 'pmol/L', name: 'Free T4' },
+            hemoglobin: { min: 12, max: 16, unit: 'g/dL', name: 'Hemoglobin' },
+            hematocrit: { min: 36, max: 46, unit: '%', name: 'Hematokrit' },
+            wbc: { min: 4.0, max: 10.0, unit: '10⁹/L', name: 'WBC' },
+            rbc: { min: 4.0, max: 5.5, unit: '10¹²/L', name: 'RBC' },
+            platelets: { min: 150, max: 400, unit: '10⁹/L', name: 'Trombositlər' },
+            alt: { min: 0, max: 41, unit: 'U/L', name: 'ALT' },
+            ast: { min: 0, max: 40, unit: 'U/L', name: 'AST' },
+            creatinine: { min: 62, max: 106, unit: 'µmol/L', name: 'Kreatinin' },
+            urea: { min: 2.5, max: 7.1, unit: 'mmol/L', name: 'Üre' },
+            vitaminD: { min: 30, max: 100, unit: 'ng/mL', name: 'D Vitamini' },
+            b12: { min: 200, max: 900, unit: 'pg/mL', name: 'B12' },
+            calcium: { min: 2.1, max: 2.6, unit: 'mmol/L', name: 'Kalsium' }
+        };
+
+        // Section Navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(s => {
+                s.classList.remove('active');
+                s.style.display = 'none';
+            });
+            
+            // Show target section
+            const target = document.getElementById(sectionId);
+            if (target) {
+                target.classList.add('active');
+                target.style.display = 'block';
+            }
+            
+            // Update nav links
+            document.querySelectorAll('.nav-link').forEach(l => {
+                l.classList.remove('active');
+            });
+            
+            const navLink = document.querySelector(`[data-section="${sectionId}"]`);
+            if (navLink) navLink.classList.add('active');
+            
+            // Close mobile menu
+            const mobileMenu = document.getElementById('mobileMenu');
+            if (mobileMenu) mobileMenu.classList.add('hidden');
+            
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+
+        // Questionnaire Steps
+        function nextStep(step) {
+            // Save current step data
+            saveQuestionnaireData();
+            
+            // Hide current step
+            document.getElementById(`step${step}`).classList.remove('active');
+            document.getElementById(`step${step}`).style.display = 'none';
+            
+            // Show next step
+            const nextStepNum = step + 1;
+            const nextStepEl = document.getElementById(`step${nextStepNum}`);
+            if (nextStepEl) {
+                nextStepEl.classList.add('active');
+                nextStepEl.style.display = 'block';
+                currentStep = nextStepNum;
+            }
+            
+            // Update progress
+            updateProgress(nextStepNum);
+        }
+
+        function prevStep(step) {
+            // Hide current step
+            document.getElementById(`step${step}`).classList.remove('active');
+            document.getElementById(`step${step}`).style.display = 'none';
+            
+            // Show previous step
+            const prevStepNum = step - 1;
+            const prevStepEl = document.getElementById(`step${prevStepNum}`);
+            if (prevStepEl) {
+                prevStepEl.classList.add('active');
+                prevStepEl.style.display = 'block';
+                currentStep = prevStepNum;
+            }
+            
+            // Update progress
+            updateProgress(prevStepNum);
+        }
+
+        function updateProgress(step) {
+            const progress = (step / 4) * 100;
+            document.getElementById('progressBar').style.width = `${progress}%`;
+            document.getElementById('stepIndicator').textContent = `Addım ${step}/4`;
+        }
+
+        function saveQuestionnaireData() {
+            const data = JSON.parse(localStorage.getItem('healthApp_data') || '{}');
+            
+            // Step 1 data
+            data.name = document.getElementById('userName')?.value || data.name || '';
+            data.age = document.getElementById('userAge')?.value || data.age || '';
+            data.weight = document.getElementById('userWeight')?.value || data.weight || '';
+            data.height = document.getElementById('userHeight')?.value || data.height || '';
+            
+            const genderEl = document.querySelector('input[name="gender"]:checked');
+            if (genderEl) data.gender = genderEl.value;
+            
+            // Step 2 data
+            data.conditions = Array.from(document.querySelectorAll('input[name="conditions"]:checked')).map(cb => cb.value);
+            
+            // Step 3 data
+            data.allergies = Array.from(document.querySelectorAll('input[name="allergies"]:checked')).map(cb => cb.value);
+            const otherAllergy = document.getElementById('otherAllergy')?.value;
+            if (otherAllergy) data.allergies.push(otherAllergy);
+            data.forbidden = Array.from(document.querySelectorAll('input[name="forbidden"]:checked')).map(cb => cb.value);
+            
+            // Step 4 data
+            const goalEl = document.querySelector('input[name="goal"]:checked');
+            if (goalEl) data.goal = goalEl.value;
+            const dietEl = document.querySelector('input[name="diet"]:checked');
+            if (dietEl) data.diet = dietEl.value;
+            
+            localStorage.setItem('healthApp_data', JSON.stringify(data));
+            appData = data;
+        }
+
+        function finishQuestionnaire() {
+            saveQuestionnaireData();
+            showSection('upload');
+        }
+
+        // File Upload
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                showFilePreview(file);
+            }
+        }
+
+        function showFilePreview(file) {
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('filePreview').classList.remove('hidden');
+            
+            // Image preview
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('previewImg').src = e.target.result;
+                    document.getElementById('imagePreview').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function clearFile() {
+            document.getElementById('fileInput').value = '';
+            document.getElementById('filePreview').classList.add('hidden');
+            document.getElementById('imagePreview').classList.add('hidden');
+        }
+
+        // Drag and drop
+        const dropZone = document.getElementById('dropZone');
+        if (dropZone) {
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    showFilePreview(files[0]);
+                }
+            });
+        }
+
+        // Tab Navigation
+        function switchTab(tabIndex) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(t => {
+                t.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(`tab${tabIndex}`).classList.add('active');
+            
+            // Update button styles
+            document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+                if (idx === tabIndex) {
+                    btn.classList.remove('bg-slate-100', 'dark:bg-slate-700');
+                    btn.classList.add('bg-primary', 'text-white');
+                } else {
+                    btn.classList.add('bg-slate-100', 'dark:bg-slate-700');
+                    btn.classList.remove('bg-primary', 'text-white');
+                }
+            });
+            
+            currentTab = tabIndex;
+        }
+
+        // Input Validation
+        function validateInput(input, min, max) {
+            const val = parseFloat(input.value);
+            
+            // Remove all border classes
+            input.classList.remove('border-green-500', 'border-amber-500', 'border-red-500', 'border-slate-200', 'dark:border-slate-700');
+            
+            if (isNaN(val)) {
+                input.classList.add('border-slate-200', 'dark:border-slate-700');
+                return;
+            }
+            
+            // For values where higher is better (like HDL)
+            if (max > 100 && min > 0) {
+                if (val >= min) {
+                    input.classList.add('border-green-500');
+                } else {
+                    input.classList.add('border-red-500');
+                }
+            } else {
+                // Normal range check
+                if (val >= min && val <= max) {
+                    input.classList.add('border-green-500');
+                } else if ((val < min * 0.8) || (val > max * 1.2)) {
+                    input.classList.add('border-red-500');
+                } else {
+                    input.classList.add('border-amber-500');
+                }
+            }
+        }
+
+        // Analysis and Results
+        function analyzeAndShowResults() {
+            // Save all parameter values
+            saveParameterData();
+
+            // If no numeric inputs provided, fallback to demo data for quick preview
+            const data = JSON.parse(localStorage.getItem('healthApp_data') || '{}');
+            const numericKeys = Object.keys(referenceRanges);
+            const filledCount = numericKeys.reduce((acc, key) => acc + (data[key] !== undefined ? 1 : 0), 0);
+            if (filledCount === 0) {
+                fillDemoData();
+                return;
+            }
+            
+            // Calculate results
+            calculateResults();
+            
+            // Show results section
+            showSection('results');
+        }
+
+        function saveParameterData() {
+            const data = JSON.parse(localStorage.getItem('healthApp_data') || '{}');
+            
+            // Save all input values
+            const inputs = [
+                'glucose', 'hba1c', 'totalCholesterol', 'ldl', 'hdl', 'triglycerides',
+                'tsh', 'ft3', 'ft4', 'hemoglobin', 'hematocrit', 'wbc', 'rbc', 'platelets',
+                'alt', 'ast', 'ggt', 'creatinine', 'urea', 'vitaminD', 'b12', 'ferritin', 'iron', 'calcium'
+            ];
+            
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el && el.value) {
+                    data[id] = parseFloat(el.value);
+                }
+            });
+            
+            localStorage.setItem('healthApp_data', JSON.stringify(data));
+            appData = data;
+        }
+
+        function calculateResults() {
+            const data = JSON.parse(localStorage.getItem('healthApp_data') || '{}');
+            appData = data;
+            
+            let critical = 0, warning = 0, normal = 0;
+            const results = [];
+            
+            // Analyze each parameter
+            for (const [key, range] of Object.entries(referenceRanges)) {
+                const value = data[key];
+                if (value === undefined || isNaN(value)) continue;
+                
+                let status = 'normal';
+                let statusText = 'Normal';
+                let statusClass = 'bg-health/10 text-health';
+                
+                // Special handling for HDL (higher is better)
+                if (key === 'hdl') {
+                    if (value < range.min) {
+                        status = 'warning';
+                        statusText = 'Aşağı';
+                        statusClass = 'bg-warning/10 text-warning';
+                        warning++;
+                    } else {
+                        status = 'normal';
+                        statusText = 'Yaxşı';
+                        statusClass = 'bg-health/10 text-health';
+                        normal++;
+                    }
+                } else {
+                    if (value < range.min || value > range.max) {
+                        const deviation = value < range.min ? range.min / value : value / range.max;
+                        if (deviation > 1.5 || value < range.min * 0.5 || value > range.max * 2) {
+                            status = 'critical';
+                            statusText = 'Kritik';
+                            statusClass = 'bg-danger/10 text-danger';
+                            critical++;
+                        } else {
+                            status = 'warning';
+                            statusText = value < range.min ? 'Aşağı' : 'Yüksək';
+                            statusClass = 'bg-warning/10 text-warning';
+                            warning++;
+                        }
+                    } else {
+                        normal++;
+                    }
+                }
+                
+                results.push({
+                    name: range.name,
+                    value: value,
+                    unit: range.unit,
+                    ref: `${range.min}-${range.max}`,
+                    status: status,
+                    statusText: statusText,
+                    statusClass: statusClass
+                });
+            }
+            
+            // Update summary cards
+            document.getElementById('criticalCount').textContent = critical;
+            document.getElementById('warningCount').textContent = warning;
+            document.getElementById('normalCount').textContent = normal;
+            
+            // Show critical alert if needed
+            const criticalAlert = document.getElementById('criticalAlert');
+            if (criticalAlert) {
+                if (critical > 0) {
+                    criticalAlert.classList.remove('hidden');
+                } else {
+                    criticalAlert.classList.add('hidden');
+                }
+            }
+            
+            // Update gauges
+            updateGauge('glucose', data.glucose, 3.9, 11.1);
+            updateGauge('cholesterol', data.totalCholesterol, 0, 8);
+            updateGauge('tsh', data.tsh, 0, 10);
+            
+            // Update table
+            updateResultsTable(results);
+            
+            // Update health score
+            const total = critical + warning + normal;
+            const score = total > 0 ? Math.round((normal / total) * 100) : 0;
+            document.getElementById('healthScoreBar').style.width = `${score}%`;
+            document.getElementById('healthScoreValue').textContent = `${score}%`;
+            
+            let scoreText = '';
+            if (score >= 90) scoreText = 'Əla! Sağlamlığınız çox yaxşıdır';
+            else if (score >= 70) scoreText = 'Yaxşı, lakin bəzi göstəricilərə diqqət yetirin';
+            else if (score >= 50) scoreText = 'Orta səviyyə, sağlamlıq planına əməl edin';
+            else scoreText = 'Kritik göstəricilər var, həkimə müraciət edin';
+            document.getElementById('healthScoreText').textContent = scoreText;
+            
+            // Update primary recommendation
+            updatePrimaryRecommendation(data, critical, warning);
+            
+            // Update date
+            document.getElementById('analysisDate').textContent = new Date().toLocaleDateString('az-AZ');
+            
+            // Generate meal plan
+            generateMealPlan(data, warning > 0);
+        }
+
+        function updateGauge(type, value, min, max) {
+            if (!value) return;
+            
+            const percentage = Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100));
+            const offset = 283 - (283 * percentage) / 100;
+            
+            const circle = document.getElementById(`${type}Circle`);
+            const valueEl = document.getElementById(`${type}Value`);
+            
+            if (circle) circle.style.strokeDashoffset = offset;
+            if (valueEl) valueEl.textContent = value.toFixed(1);
+            
+            // Update color based on value
+            if (circle) {
+                let color = '#10b981'; // green
+                if (type === 'glucose') {
+                    if (value > 7.0) color = '#ef4444'; // red
+                    else if (value > 6.1) color = '#f59e0b'; // amber
+                } else if (type === 'cholesterol') {
+                    if (value > 6.2) color = '#ef4444';
+                    else if (value > 5.2) color = '#f59e0b';
+                } else if (type === 'tsh') {
+                    if (value > 4.0 || value < 0.4) color = '#f59e0b';
+                    if (value > 10 || value < 0.1) color = '#ef4444';
+                }
+                circle.setAttribute('stroke', color);
+            }
+        }
+
+        function updateResultsTable(results) {
+            const tbody = document.getElementById('resultsTableBody');
+            if (!tbody) return;
+            
+            tbody.innerHTML = results.slice(0, 8).map(r => `
+                <tr class="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                    <td class="py-3 px-2">${r.name}</td>
+                    <td class="text-center py-3 px-2 font-medium">${r.value} ${r.unit}</td>
+                    <td class="text-center py-3 px-2 text-slate-500">${r.ref} ${r.unit}</td>
+                    <td class="text-center py-3 px-2">
+                        <span class="px-3 py-1 rounded-full text-xs font-medium ${r.statusClass}">${r.statusText}</span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function toggleTableExpand() {
+            const tbody = document.getElementById('resultsTableBody');
+            const btn = document.getElementById('expandTableBtn');
+            const data = JSON.parse(localStorage.getItem('healthApp_data') || '{}');
+            
+            const results = [];
+            for (const [key, range] of Object.entries(referenceRanges)) {
+                const value = data[key];
+                if (value === undefined || isNaN(value)) continue;
+                
+                let statusText = 'Normal';
+                let statusClass = 'bg-health/10 text-health';
+                
+                if (key === 'hdl') {
+                    if (value < range.min) {
+                        statusText = 'Aşağı';
+                        statusClass = 'bg-warning/10 text-warning';
+                    } else {
+                        statusText = 'Yaxşı';
+                    }
+                } else if (value < range.min || value > range.max) {
+                    statusText = value < range.min ? 'Aşağı' : 'Yüksək';
+                    statusClass = 'bg-warning/10 text-warning';
+                }
+                
+                results.push({
+                    name: range.name,
+                    value: value,
+                    unit: range.unit,
+                    ref: `${range.min}-${range.max}`,
+                    statusText: statusText,
+                    statusClass: statusClass
+                });
+            }
+            
+            if (btn.textContent === 'Hamısını göstər') {
+                tbody.innerHTML = results.map(r => `
+                    <tr class="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                        <td class="py-3 px-2">${r.name}</td>
+                        <td class="text-center py-3 px-2 font-medium">${r.value} ${r.unit}</td>
+                        <td class="text-center py-3 px-2 text-slate-500">${r.ref} ${r.unit}</td>
+                        <td class="text-center py-3 px-2">
+                            <span class="px-3 py-1 rounded-full text-xs font-medium ${r.statusClass}">${r.statusText}</span>
+                        </td>
+                    </tr>
+                `).join('');
+                btn.textContent = 'Azalt';
+            } else {
+                updateResultsTable(results);
+                btn.textContent = 'Hamısını göstər';
+            }
+        }
+
+        function updatePrimaryRecommendation(data, critical, warning) {
+            const recEl = document.getElementById('primaryRecommendation');
+            if (!recEl) return;
+            
+            let message = '';
+            
+            if (data.glucose > 6.1) {
+                message = 'Qan şəkəri səviyyəniz yüksəkdir. Daha çox lifli qidalar, az şəkər və karbohidrat istehlak edin. Gündəlik 30 dəqiqəlik fiziki aktivlik tövsiyə olunur.';
+            } else if (data.vitaminD < 30) {
+                message = 'D vitamini çatışmazlığı aşkar edildi. Gündə 15 dəqiqə günəş işığı, D vitamini ilə zəngin qidalar (baliq, yumurta) və əlavələr tövsiyə olunur.';
+            } else if (data.tsh > 4.0) {
+                message = 'TSH səviyyəniz yüksəkdir. Tiroid funksiyasını yaxşılaşdırmaq üçün yod ilə zəngin qidalar, selenium əlavələri və stress idarəetmə tövsiyə olunur.';
+            } else if (data.totalCholesterol > 5.2) {
+                message = 'Xolesterol səviyyəniz yüksəkdir. Qırmızı əti azaldın, balıq və tərəvəz artırın, gündə 30 dəqiqə idman edin.';
+            } else if (critical > 0) {
+                message = 'Bəzi göstəriciləriniz kritik həddədir. Zəhmət olmasa mümkün qədər tez həkimə müraciət edin və verilən tövsiyələrə ciddi əməl edin.';
+            } else if (warning > 0) {
+                message = 'Bəzi göstəriciləriniz normadan kənardır. Təqdim olunan qidalanma planına və sağlamlıq tövsiyələrinə əməl etməyiniz tövsiyə olunur.';
+            } else {
+                message = 'Təbriklər! Sağlamlıq göstəriciləriniz ümumilikdə yaxşıdır. Profilaktik tədbirlərə davam edin və sağlam həyat tərzini qoruyun.';
+            }
+            
+            recEl.textContent = message;
+        }
+
+        // Meal Plan Generation
+        function generateMealPlan(data, hasWarnings) {
+            const grid = document.getElementById('mealPlanGrid');
+            const warning = document.getElementById('mealWarning');
+            const subtitle = document.getElementById('mealPlanSubtitle');
+            
+            if (!grid) return;
+            
+            // Show/hide warning
+            if (warning) {
+                if (data.glucose > 6.1) {
+                    warning.classList.remove('hidden');
+                } else {
+                    warning.classList.add('hidden');
+                }
+            }
+            
+            // Update subtitle
+            if (subtitle) {
+                if (data.glucose > 6.1) {
+                    subtitle.textContent = 'Şəkər nəzarəti üçün xüsusi hazırlanmış qidalanma planı';
+                } else if (data.totalCholesterol > 5.2) {
+                    subtitle.textContent = 'Xolesterol azaltmaq üçün xüsusi qidalanma planı';
+                } else {
+                    subtitle.textContent = 'Sağlamlıq göstəricilərinizə uyğun hazırlanmış';
+                }
+            }
+            
+            const days = [
+                { name: 'Bazar ertəsi', badge: 'Detoks', badgeColor: 'bg-health/10 text-health' },
+                { name: 'Çərşənbə axşamı', badge: 'Normal', badgeColor: 'bg-primary/10 text-primary' },
+                { name: 'Çərşənbə', badge: 'Normal', badgeColor: 'bg-primary/10 text-primary' },
+                { name: 'Cümə axşamı', badge: 'Zəngin', badgeColor: 'bg-warning/10 text-warning' },
+                { name: 'Cümə', badge: 'Detoks', badgeColor: 'bg-health/10 text-health' },
+                { name: 'Şənbə', badge: 'Rahat', badgeColor: 'bg-purple-500/10 text-purple-500' },
+                { name: 'Bazar', badge: 'Hazırlıq', badgeColor: 'bg-slate-200 dark:bg-slate-700' }
+            ];
+            
+            const meals = getMealsForProfile(data);
+            
+            grid.innerHTML = days.map((day, idx) => `
+                <div class="meal-card bg-white dark:bg-slate-800 rounded-2xl shadow-lg overflow-hidden transition-all duration-300">
+                    <div class="p-5">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold">${day.name}</h3>
+                            <span class="px-2 py-1 rounded-lg text-xs font-medium ${day.badgeColor}">${day.badge}</span>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="flex gap-3">
+                                <span class="material-symbols-outlined text-warning">wb_twilight</span>
+                                <div>
+                                    <p class="text-xs text-slate-500">Səhər</p>
+                                    <p class="font-medium text-sm">${meals[idx].breakfast}</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-3">
+                                <span class="material-symbols-outlined text-health">wb_sunny</span>
+                                <div>
+                                    <p class="text-xs text-slate-500">Nahar</p>
+                                    <p class="font-medium text-sm">${meals[idx].lunch}</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-3">
+                                <span class="material-symbols-outlined text-primary">nights_stay</span>
+                                <div>
+                                    <p class="text-xs text-slate-500">Şam</p>
+                                    <p class="font-medium text-sm">${meals[idx].dinner}</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-3">
+                                <span class="material-symbols-outlined text-slate-400">restaurant</span>
+                                <div>
+                                    <p class="text-xs text-slate-500">Ara yemək</p>
+                                    <p class="font-medium text-sm">${meals[idx].snack}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+                            <div class="flex flex-wrap gap-2">
+                                ${meals[idx].benefits.map(b => `
+                                    <span class="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded-lg text-xs">
+                                        <span class="material-symbols-outlined text-xs">${b.icon}</span>
+                                        ${b.text}
+                                    </span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getMealsForProfile(data) {
+            const isDiabetic = data.glucose > 6.1;
+            const highCholesterol = data.totalCholesterol > 5.2;
+            
+            if (isDiabetic) {
+                return [
+                    { breakfast: 'Yulaf ezmesi + qatıq + yaşıl çay', lunch: 'Mərci şorbası + salat', dinner: 'Qızardılmış balıq + brokoli', snack: 'Qoz-fındıq + alma', benefits: [{ icon: 'trending_down', text: 'Şəkəri salır' }, { icon: 'eco', text: 'Lifli' }] },
+                    { breakfast: 'Yumurta + avokado + tam buğda çörəyi', lunch: 'Toyuq buğlaması + göyərti', dinner: 'Dovğa + yaşıl salat', snack: 'Xiyar + lobya', benefits: [{ icon: 'favorite', text: 'Ürək dostu' }, { icon: 'eco', text: 'Həzm' }] },
+                    { breakfast: 'Pendir + pomidor + zeytun', lunch: 'Qaymaqlı şorba + əriştə', dinner: 'İzləmiş ət + tərəvəz', snack: 'Qarpız', benefits: [{ icon: 'water_drop', text: 'Suyolucu' }, { icon: 'eco', text: 'Detoks' }] },
+                    { breakfast: 'Kəsmik + meyvə', lunch: 'Dolma + ayran', dinner: 'Mantı + salat', snack: 'Qoz', benefits: [{ icon: 'fitness_center', text: 'Enerji' }, { icon: 'favorite', text: 'Protein' }] },
+                    { breakfast: 'Yulaf + süd + darçın', lunch: 'Ləvəngi + turşu', dinner: 'Balıq + ispanaq', snack: 'Grepfrut', benefits: [{ icon: 'trending_down', text: 'Metabolizm' }, { icon: 'eco', text: 'Təmizləyici' }] },
+                    { breakfast: 'Krep + bal + çay', lunch: 'Kabab + sumaç soğan', dinner: 'Toyuq şorbası', snack: 'Alma', benefits: [{ icon: 'mood', text: 'Rahatlayıcı' }, { icon: 'favorite', text: 'Protein' }] },
+                    { breakfast: 'Mərcimək + sous', lunch: 'Plov + turşu', dinner: 'Xaş + sirkə', snack: 'Nar', benefits: [{ icon: 'health_and_safety', text: 'Vitamin C' }, { icon: 'eco', text: 'Antioksidant' }] }
+                ];
+            } else if (highCholesterol) {
+                return [
+                    { breakfast: 'Yulaf + zerdeçal + süd', lunch: 'Qırmızı ətsiz salat + zeytun yağı', dinner: 'Buğlama balıq + yaşıl lobya', snack: 'Fındıq + quru ərik', benefits: [{ icon: 'trending_down', text: 'Xolesterol salır' }, { icon: 'favorite', text: 'Omega-3' }] },
+                    { breakfast: 'Yağsız kəsmik + meyvə', lunch: 'Toyuq göğsü + brokoli', dinner: 'Mərci yeməyi + salat', snack: 'Alma + darçın', benefits: [{ icon: 'eco', text: 'Lifli' }, { icon: 'trending_down', text: 'Sağlam piylər' }] },
+                    { breakfast: 'Paxlalı yemək + pomidor', lunch: 'Dəniz məhsulları şorbası', dinner: 'Kabab (az yağlı) + göyərti', snack: 'Qarpız', benefits: [{ icon: 'water_drop', text: 'Suyolucu' }, { icon: 'favorite', text: 'Az kalorili' }] },
+                    { breakfast: 'Tam buğda çörəyi + avokado', lunch: 'Salmon + qovrulmuş tərəvəz', dinner: 'Paxla supu + turşu', snack: 'Yaşıl çay + qoz', benefits: [{ icon: 'favorite', text: 'Ürək dostu' }, { icon: 'trending_down', text: 'Xolesterol' }] },
+                    { breakfast: 'Darçınlı yulaf + yağsız süd', lunch: 'Qaraciyər + soğan', dinner: 'Buğlanmış balıq + kartof', snack: 'Meyvə salatı', benefits: [{ icon: 'health_and_safety', text: 'Dəmir' }, { icon: 'eco', text: 'Həzm' }] },
+                    { breakfast: 'Pomidor-yumurta (az yağda)', lunch: 'Tərəvəz şorbası', dinner: 'Quş əti + salat', snack: 'Badem + süd', benefits: [{ icon: 'fitness_center', text: 'Protein' }, { icon: 'favorite', text: 'Sağlam' }] },
+                    { breakfast: 'Meyvə şirəsi + tost', lunch: 'Plov (az yağda) + turşu', dinner: 'Sorpa + göyərti', snack: 'Bibər + humus', benefits: [{ icon: 'eco', text: 'Tərəvəzli' }, { icon: 'trending_down', text: 'Yağsız' }] }
+                ];
+            } else {
+                return [
+                    { breakfast: 'Kəsmikli omlet + yaşıl çay', lunch: 'Dolma + ayran', dinner: 'Toyuq şorbası + salat', snack: 'Alma + qoz', benefits: [{ icon: 'fitness_center', text: 'Enerji' }, { icon: 'favorite', text: 'Protein' }] },
+                    { breakfast: 'Yulaf + qatıq + bal', lunch: 'Kabab + sumaç soğan', dinner: 'Mərci şorbası', snack: 'Qarpız', benefits: [{ icon: 'mood', text: 'Doyurucu' }, { icon: 'eco', text: 'Lifli' }] },
+                    { breakfast: 'Sıyıq + yağ + pendir', lunch: 'Sorpa + turşu', dinner: 'Balıq + kartof', snack: 'Nar + qoz', benefits: [{ icon: 'health_and_safety', text: 'Vitamin' }, { icon: 'favorite', text: 'Omega-3' }] },
+                    { breakfast: 'Pancake + mürəbbə', lunch: 'Plov + qara turşu', dinner: 'Xaş + sirkə soğan', snack: 'Xiyar + pomidor', benefits: [{ icon: 'water_drop', text: 'Suyolucu' }, { icon: 'eco', text: 'Detoks' }] },
+                    { breakfast: 'Paxlalı yemək + yumurta', lunch: 'Ləvəngi + qatıq', dinner: 'Quş əti + tərəvəz', snack: 'Banan', benefits: [{ icon: 'fitness_center', text: 'Protein' }, { icon: 'mood', text: 'Kalisium' }] },
+                    { breakfast: 'Dovğa + xəngəl', lunch: 'Dəniz məhsulları + salat', dinner: 'Mantı + suzanmaq', snack: 'Meyvə', benefits: [{ icon: 'eco', text: 'Kalsium' }, { icon: 'favorite', text: 'Dənizli' }] },
+                    { breakfast: 'Menemen + çay', lunch: 'Qızartma (az yağda) + salat', dinner: 'Toyuq buğlaması', snack: 'Badam', benefits: [{ icon: 'mood', text: 'Rahat' }, { icon: 'health_and_safety', text: 'Faydalı' }] }
+                ];
+            }
+        }
+
+        // Demo Data
+        function fillDemoData() {
+            const demoData = {
+                name: 'Demo İstifadəçi',
+                age: 35,
+                gender: 'Kişi',
+                weight: 85,
+                height: 178,
+                conditions: ['Şəkər xəstəliyi'],
+                allergies: ['Gluten'],
+                forbidden: ['Şəkər'],
+                goal: 'Ümumi sağlamlıq',
+                diet: 'Adi',
+                // Blood parameters
+                glucose: 7.2,
+                hba1c: 6.8,
+                totalCholesterol: 6.1,
+                ldl: 3.8,
+                hdl: 0.9,
+                triglycerides: 2.1,
+                tsh: 4.8,
+                ft3: 4.2,
+                ft4: 15,
+                hemoglobin: 13.2,
+                hematocrit: 42,
+                wbc: 7.5,
+                rbc: 4.8,
+                platelets: 280,
+                alt: 35,
+                ast: 28,
+                ggt: 45,
+                creatinine: 85,
+                urea: 5.5,
+                vitaminD: 18,
+                b12: 350,
+                ferritin: 60,
+                iron: 12,
+                calcium: 2.3
+            };
+            
+            localStorage.setItem('healthApp_data', JSON.stringify(demoData));
+            appData = demoData;
+            
+            // Fill in form inputs for demo
+            Object.entries(demoData).forEach(([key, value]) => {
+                const el = document.getElementById(key);
+                if (el && typeof value === 'number') {
+                    el.value = value;
+                    // Trigger validation
+                    const range = referenceRanges[key];
+                    if (range) {
+                        validateInput(el, range.min, range.max);
+                    }
+                }
+            });
+            
+            calculateResults();
+            showSection('results');
+        }
+
+        // PDF Generation
+        function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const data = JSON.parse(localStorage.getItem('healthApp_data') || '{}');
+            
+            // Title
+            doc.setFontSize(20);
+            doc.text('Qan Analizi Nəticələri', 20, 30);
+            
+            // Date
+            doc.setFontSize(12);
+            doc.text(`Tarix: ${new Date().toLocaleDateString('az-AZ')}`, 20, 45);
+            
+            // User info
+            if (data.name) {
+                doc.text(`Xəstə: ${data.name}`, 20, 55);
+            }
+            
+            let y = 70;
+            
+            // Results section
+            doc.setFontSize(14);
+            doc.text('Əsas Göstəricilər:', 20, y);
+            y += 10;
+            
+            doc.setFontSize(10);
+            for (const [key, range] of Object.entries(referenceRanges)) {
+                const value = data[key];
+                if (value !== undefined && !isNaN(value)) {
+                    let status = 'Normal';
+                    if (key === 'hdl') {
+                        if (value < range.min) status = 'Aşağı';
+                    } else if (value < range.min || value > range.max) {
+                        status = value < range.min ? 'Aşağı' : 'Yüksək';
+                    }
+                    doc.text(`${range.name}: ${value} ${range.unit} (${status})`, 20, y);
+                    y += 7;
+                    
+                    if (y > 270) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                }
+            }
+            
+            // Recommendations
+            y += 10;
+            if (y > 250) {
+                doc.addPage();
+                y = 20;
+            }
+            
+            doc.setFontSize(14);
+            doc.text('Tövsiyələr:', 20, y);
+            y += 10;
+            
+            doc.setFontSize(10);
+            const rec = document.getElementById('primaryRecommendation')?.textContent || 'Sağlamlıq göstəricilərinizi yaxşılaşdırmaq üçün müntəzəm idman və sağlam qidalanma tövsiyə olunur.';
+            const splitRec = doc.splitTextToSize(rec, 170);
+            doc.text(splitRec, 20, y);
+            
+            // Save
+            doc.save('qan-tehlili.pdf');
+        }
+
+        // WhatsApp Share
+        function shareWhatsApp() {
+            const data = JSON.parse(localStorage.getItem('healthApp_data') || '{}');
+            
+            let summary = '*Qan Analizi Nəticələrim*\n\n';
+            
+            if (data.name) summary += `Xəstə: ${data.name}\n`;
+            summary += `Tarix: ${new Date().toLocaleDateString('az-AZ')}\n\n`;
+            
+            // Add key values
+            const keyParams = ['glucose', 'totalCholesterol', 'tsh', 'hemoglobin', 'vitaminD'];
+            keyParams.forEach(key => {
+                if (data[key] !== undefined) {
+                    const range = referenceRanges[key];
+                    summary += `${range.name}: ${data[key]} ${range.unit}\n`;
+                }
+            });
+            
+            summary += '\n_SmartHealth tərəfindən təhlil edildi_';
+            
+            window.open(`https://wa.me/?text=${encodeURIComponent(summary)}`, '_blank');
+        }
+
+        // JSON Download
+        function downloadJSON() {
+            const data = localStorage.getItem('healthApp_data') || '{}';
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'analiz-neticeleri.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Dark Mode Toggle
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const isDark = html.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            
+            // Update icons
+            const icons = ['themeIcon', 'resultsThemeIcon'];
+            icons.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = isDark ? 'light_mode' : 'dark_mode';
+            });
+        }
+
+        // Mobile Menu
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            if (menu) menu.classList.toggle('hidden');
+        }
+
+        // Reset App
+        function resetApp() {
+            if (confirm('Bütün məlumatlar silinəcək. Davam etmək istəyirsiniz?')) {
+                localStorage.removeItem('healthApp_data');
+                appData = {};
+                
+                // Clear all inputs
+                document.querySelectorAll('input[type="number"]').forEach(el => el.value = '');
+                document.querySelectorAll('input[type="text"]').forEach(el => el.value = '');
+                document.querySelectorAll('input[type="checkbox"]').forEach(el => el.checked = false);
+                document.querySelectorAll('input[type="radio"]').forEach(el => el.checked = false);
+                
+                // Clear file
+                clearFile();
+                
+                // Reset to step 1
+                currentStep = 1;
+                document.querySelectorAll('.step').forEach((s, i) => {
+                    s.classList.toggle('active', i === 0);
+                    s.style.display = i === 0 ? 'block' : 'none';
+                });
+                updateProgress(1);
+                
+                // Go to welcome
+                showSection('welcome');
+            }
+        }
+
+        // Timeline checkbox save
+        document.addEventListener('change', (e) => {
+            if (e.target.classList.contains('timeline-check')) {
+                const step = e.target.dataset.step;
+                const checked = e.target.checked;
+                const saved = JSON.parse(localStorage.getItem('timeline_checks') || '{}');
+                if (!saved[step]) saved[step] = [];
+                
+                // Simple save of checked state
+                const index = Array.from(document.querySelectorAll(`[data-step="${step}"]`)).indexOf(e.target);
+                saved[step][index] = checked;
+                localStorage.setItem('timeline_checks', JSON.stringify(saved));
+                
+                // Visual update
+                e.target.closest('label').classList.toggle('checkbox-checked', checked);
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load saved theme
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('themeIcon').textContent = 'dark_mode';
+            }
+            
+            // Load saved data
+            const saved = localStorage.getItem('healthApp_data');
+            if (saved) {
+                appData = JSON.parse(saved);
+                
+                // Fill in saved values
+                Object.entries(appData).forEach(([key, value]) => {
+                    const el = document.getElementById(key);
+                    if (el && typeof value === 'number') {
+                        el.value = value;
+                        const range = referenceRanges[key];
+                        if (range) validateInput(el, range.min, range.max);
+                    } else if (el && typeof value === 'string') {
+                        el.value = value;
+                    }
+                });
+                
+                // Restore checkboxes
+                if (appData.conditions) {
+                    appData.conditions.forEach(c => {
+                        const cb = document.querySelector(`input[name="conditions"][value="${c}"]`);
+                        if (cb) cb.checked = true;
+                    });
+                }
+                if (appData.allergies) {
+                    appData.allergies.forEach(a => {
+                        const cb = document.querySelector(`input[name="allergies"][value="${a}"]`);
+                        if (cb) cb.checked = true;
+                    });
+                }
+                if (appData.forbidden) {
+                    appData.forbidden.forEach(f => {
+                        const cb = document.querySelector(`input[name="forbidden"][value="${f}"]`);
+                        if (cb) cb.checked = true;
+                    });
+                }
+                if (appData.gender) {
+                    const rb = document.querySelector(`input[name="gender"][value="${appData.gender}"]`);
+                    if (rb) rb.checked = true;
+                }
+                if (appData.goal) {
+                    const rb = document.querySelector(`input[name="goal"][value="${appData.goal}"]`);
+                    if (rb) rb.checked = true;
+                }
+                if (appData.diet) {
+                    const rb = document.querySelector(`input[name="diet"][value="${appData.diet}"]`);
+                    if (rb) rb.checked = true;
+                }
+                
+                // Restore timeline checkboxes
+                const timelineSaved = JSON.parse(localStorage.getItem('timeline_checks') || '{}');
+                Object.entries(timelineSaved).forEach(([step, checks]) => {
+                    const checkboxes = document.querySelectorAll(`[data-step="${step}"]`);
+                    checks.forEach((checked, i) => {
+                        if (checkboxes[i]) {
+                            checkboxes[i].checked = checked;
+                            checkboxes[i].closest('label').classList.toggle('checkbox-checked', checked);
+                        }
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>
